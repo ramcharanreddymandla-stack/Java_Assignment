@@ -1,0 +1,171 @@
+import java.awt.*;
+import java.awt.event.*;
+
+public class TicTacToeGame extends Frame implements ActionListener {
+
+    // GUI Components (Composition & Encapsulation)
+    Panel boardPanel, topPanel, bottomPanel;
+    Button[] cells = new Button[9];
+    Button resetButton;
+    Label turnLabel;
+    Dialog resultDialog;
+    Label dialogMessage;
+    Button closeDialogButton;
+    MenuBar mb;
+    Menu gameMenu;
+    MenuItem newGameItem, exitItem;
+
+    // Game State
+    boolean isXTurn = true;
+    int moveCount = 0;
+
+    public TicTacToeGame() {
+        // 1. Frame Setup (Inheritance from Frame)
+        setTitle("AWT Tic-Tac-Toe");
+        setSize(400, 450);
+        setLayout(new BorderLayout(5, 5));
+
+        // 2. Menu Bar Setup
+        mb = new MenuBar();
+        gameMenu = new Menu("Game");
+        newGameItem = new MenuItem("New Game");
+        exitItem = new MenuItem("Exit");
+
+        newGameItem.addActionListener(this);
+        exitItem.addActionListener(this);
+
+        gameMenu.add(newGameItem);
+        gameMenu.add(exitItem);
+        mb.add(gameMenu);
+        setMenuBar(mb);
+
+        // 3. Top Panel for Turn Status (FlowLayout)
+        topPanel = new Panel();
+        topPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        topPanel.setBackground(Color.LIGHT_GRAY);
+        turnLabel = new Label("Player X's Turn");
+        topPanel.add(turnLabel);
+        add(topPanel, BorderLayout.NORTH);
+
+        // 4. Center Panel for 3x3 Board (GridLayout)
+        boardPanel = new Panel();
+        boardPanel.setLayout(new GridLayout(3, 3, 5, 5));
+        for (int i = 0; i < 9; i++) {
+            cells[i] = new Button("");
+            cells[i].addActionListener(this);
+            boardPanel.add(cells[i]);
+        }
+        add(boardPanel, BorderLayout.CENTER);
+
+        // 5. Bottom Panel for Reset Button (FlowLayout)
+        bottomPanel = new Panel();
+        bottomPanel.setLayout(new FlowLayout());
+        resetButton = new Button("Restart Game");
+        resetButton.addActionListener(this);
+        bottomPanel.add(resetButton);
+        add(bottomPanel, BorderLayout.SOUTH);
+
+        // 6. Modal Dialog for Game Over Message
+        resultDialog = new Dialog(this, "Game Over", true);
+        resultDialog.setSize(250, 150);
+        resultDialog.setLayout(new FlowLayout());
+        dialogMessage = new Label("");
+        closeDialogButton = new Button("Play Again");
+        closeDialogButton.addActionListener(this);
+        resultDialog.add(dialogMessage);
+        resultDialog.add(closeDialogButton);
+
+        // 7. Window Closing Event using WindowAdapter
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
+        });
+
+        setVisible(true);
+    }
+
+    // Event Handling (Polymorphism via ActionListener Interface)
+    public void actionPerformed(ActionEvent e) {
+        Object source = e.getSource();
+
+        // Menu Exit
+        if (source == exitItem) {
+            System.exit(0);
+        }
+
+        // Restart / New Game / Close Modal Dialog
+        if (source == resetButton || source == newGameItem || source == closeDialogButton) {
+            if (source == closeDialogButton) {
+                resultDialog.dispose();
+            }
+            resetBoard();
+            return;
+        }
+
+        // Check which grid button was clicked
+        for (int i = 0; i < 9; i++) {
+            if (source == cells[i] && cells[i].getLabel().equals("")) {
+                if (isXTurn) {
+                    cells[i].setLabel("X");
+                    turnLabel.setText("Player O's Turn");
+                } else {
+                    cells[i].setLabel("O");
+                    turnLabel.setText("Player X's Turn");
+                }
+
+                moveCount++;
+
+                if (checkWin()) {
+                    String winner = isXTurn ? "Player X Wins!" : "Player O Wins!";
+                    showResultDialog(winner);
+                } else if (moveCount == 9) {
+                    showResultDialog("It's a Draw!");
+                } else {
+                    isXTurn = !isXTurn;
+                }
+                break;
+            }
+        }
+    }
+
+    // Helper method to check 3-in-a-row combinations
+    private boolean checkWin() {
+        int[][] winPatterns = {
+            {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
+            {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
+            {0, 4, 8}, {2, 4, 6}             // Diagonals
+        };
+
+        for (int i = 0; i < winPatterns.length; i++) {
+            String b1 = cells[winPatterns[i][0]].getLabel();
+            String b2 = cells[winPatterns[i][1]].getLabel();
+            String b3 = cells[winPatterns[i][2]].getLabel();
+
+            if (!b1.equals("") && b1.equals(b2) && b2.equals(b3)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Display Modal Dialog on Win or Draw
+    private void showResultDialog(String message) {
+        dialogMessage.setText(message);
+        resultDialog.setVisible(true);
+    }
+
+    // Reset all buttons and state
+    private void resetBoard() {
+        for (int i = 0; i < 9; i++) {
+            cells[i].setLabel("");
+        }
+        isXTurn = true;
+        moveCount = 0;
+        turnLabel.setText("Player X's Turn");
+    }
+
+    public static void main(String[] args) {
+        new TicTacToeGame();
+    }
+}
